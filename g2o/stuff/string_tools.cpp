@@ -89,16 +89,16 @@ std::string strToUpper(const std::string& s) {
 }
 
 std::string strExpandFilename(const std::string& filename) {
-#ifdef HAS_WORDEXP
-  string result = filename;
-  wordexp_t p;
+#if (defined(UNIX) || defined(CYGWIN)) && !defined(ANDROID)
+  // string result = filename;
+  // wordexp_t p;
 
-  wordexp(filename.c_str(), &p, 0);
-  if (p.we_wordc > 0) {
-    result = p.we_wordv[0];
-  }
-  wordfree(&p);
-  return result;
+  // wordexp(filename.c_str(), &p, 0);
+  // if (p.we_wordc > 0) {
+  //   result = p.we_wordv[0];
+  // }
+  // wordfree(&p);
+  // return result;
 #else
   (void)filename;
   G2O_WARN("not implemented");

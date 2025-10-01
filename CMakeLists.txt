@@ -291,14 +291,7 @@ else()
 endif()
 
 # shall we build the core apps using the library
-if(PROJECT_IS_TOP_LEVEL)
-  option(G2O_BUILD_APPS "Build g2o apps" OFF)
-  option(G2O_BUILD_EXAMPLES "Build g2o examples" OFF)
-else()
-  option(G2O_BUILD_APPS "Build g2o apps" OFF)
-  option(G2O_BUILD_EXAMPLES "Build g2o examples" OFF)
-endif()
-
+option(G2O_BUILD_APPS "Build g2o apps" OFF)
 if(G2O_BUILD_APPS)
   message(STATUS "Compiling g2o apps")
 endif(G2O_BUILD_APPS)
@@ -308,6 +301,7 @@ CMAKE_DEPENDENT_OPTION(G2O_BUILD_LINKED_APPS "Build apps linked with the librari
   "G2O_BUILD_APPS" OFF)
 
 # shall we build the examples
+option(G2O_BUILD_EXAMPLES "Build g2o examples" OFF)
 if(G2O_BUILD_EXAMPLES)
   message(STATUS "Compiling g2o examples")
 endif(G2O_BUILD_EXAMPLES)
