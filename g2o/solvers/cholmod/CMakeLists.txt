@@ -1,11 +1,25 @@
-if (NOT G2O_USE_CHOLMOD)
+if(NOT G2O_USE_CHOLMOD)
   return()
 endif()
 
+# --- define an IMPORTED target for your prebuilt CHOLMOD ----------------------
+# Adjust these two paths ONCE:
+set(G2O_PREBUILT_CHOLMOD_LIB "${PROJECT_SOURCE_DIR}/external/linux/libcholmod.a")
+set(G2O_PREBUILT_SS_INCLUDE "${PROJECT_SOURCE_DIR}/external/linux/include")
+
+if(NOT TARGET SuiteSparse::CHOLMOD)
+  add_library(SuiteSparse::CHOLMOD STATIC IMPORTED)
+  set_target_properties(SuiteSparse::CHOLMOD PROPERTIES
+    IMPORTED_LOCATION "${G2O_PREBUILT_CHOLMOD_LIB}"
+    INTERFACE_INCLUDE_DIRECTORIES "${G2O_PREBUILT_SS_INCLUDE}"
+  )
+endif()
+# -----------------------------------------------------------------------------
+
 set(PUBLIC_HEADERS
-	linear_solver_cholmod.h
-	cholmod_wrapper.h
-	g2o_cholmod_api.h
+  linear_solver_cholmod.h
+  cholmod_wrapper.h
+  g2o_cholmod_api.h
 )
 
 add_library(solver_cholmod ${G2O_LIB_TYPE}
@@ -14,27 +28,41 @@ add_library(solver_cholmod ${G2O_LIB_TYPE}
 )
 
 target_include_directories(solver_cholmod PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<INSTALL_INTERFACE:include/g2o/solvers/cholmod>)
-
-set_target_properties(solver_cholmod PROPERTIES
-    OUTPUT_NAME ${LIB_PREFIX}solver_cholmod
-    PUBLIC_HEADER "${PUBLIC_HEADERS}"
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<INSTALL_INTERFACE:include/g2o/solvers/cholmod>
 )
-set_target_properties(solver_cholmod PROPERTIES
-  VERSION ${G2O_LIB_VERSION}
-  SOVERSION ${G2O_LIB_SOVERSION})
 
-if (APPLE)
-  set_target_properties(solver_cholmod PROPERTIES INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+set_target_properties(solver_cholmod PROPERTIES
+  OUTPUT_NAME ${LIB_PREFIX}solver_cholmod
+  PUBLIC_HEADER "${PUBLIC_HEADERS}"
+  VERSION ${G2O_LIB_VERSION}
+  SOVERSION ${G2O_LIB_SOVERSION}
+)
+
+if(APPLE)
+  set_target_properties(solver_cholmod PROPERTIES
+    INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"
+  )
 endif()
 
-add_definitions(${BLAS_DEFINITIONS} ${LAPACK_DEFINITIONS})
-target_compile_features(solver_cholmod PUBLIC cxx_std_17)
-target_link_libraries(solver_cholmod
+# BLAS/LAPACK (Linux) or Accelerate (Apple)
+if(APPLE)
+  find_library(ACCELERATE_FRAMEWORK Accelerate REQUIRED)
+  target_link_libraries(solver_cholmod
     PUBLIC core
     PRIVATE SuiteSparse::CHOLMOD
-)
+    ${ACCELERATE_FRAMEWORK}
+  )
+else()
+  find_package(BLAS REQUIRED)
+  find_package(LAPACK REQUIRED)
+  target_link_libraries(solver_cholmod
+    PUBLIC core
+    PRIVATE SuiteSparse::CHOLMOD
+    ${BLAS_LIBRARIES}
+    ${LAPACK_LIBRARIES}
+  )
+endif()
 
 install(TARGETS solver_cholmod
   EXPORT ${G2O_TARGETS_EXPORT_NAME}
