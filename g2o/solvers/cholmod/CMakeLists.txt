@@ -4,7 +4,13 @@ endif()
 
 # --- define an IMPORTED target for your prebuilt CHOLMOD ----------------------
 # Adjust these two paths ONCE:
+if(IOS)
+set(G2O_PREBUILT_CHOLMOD_LIB "${PROJECT_SOURCE_DIR}/external/ios/libcholmod.a")
+elseif(APPLE)
+set(G2O_PREBUILT_CHOLMOD_LIB "${PROJECT_SOURCE_DIR}/external/mac/libcholmod.a")
+elseif(UNIX)
 set(G2O_PREBUILT_CHOLMOD_LIB "${PROJECT_SOURCE_DIR}/external/linux/libcholmod.a")
+endif()
 set(G2O_PREBUILT_SS_INCLUDE "${PROJECT_SOURCE_DIR}/external/linux/include")
 
 if(NOT TARGET SuiteSparse::CHOLMOD)
@@ -39,21 +45,27 @@ set_target_properties(solver_cholmod PROPERTIES
   SOVERSION ${G2O_LIB_SOVERSION}
 )
 
-if(APPLE)
+if(APPLE OR IOS)
   set_target_properties(solver_cholmod PROPERTIES
     INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"
   )
 endif()
 
 # BLAS/LAPACK (Linux) or Accelerate (Apple)
-if(APPLE)
+if(IOS)
+  message(WARNING "Not using Accelerate on IOS")
+    target_link_libraries(solver_cholmod
+    PUBLIC core
+    PRIVATE SuiteSparse::CHOLMOD
+    )
+elseif(APPLE)
   find_library(ACCELERATE_FRAMEWORK Accelerate REQUIRED)
   target_link_libraries(solver_cholmod
     PUBLIC core
     PRIVATE SuiteSparse::CHOLMOD
     ${ACCELERATE_FRAMEWORK}
   )
-else()
+elseif(UNIX)
   find_package(BLAS REQUIRED)
   find_package(LAPACK REQUIRED)
   target_link_libraries(solver_cholmod

@@ -106,8 +106,16 @@ endif()
 set(G2O_USE_CHOLMOD ON)
 
 # Hard-coded paths to your prebuilt CHOLMOD lib and (optional) includes
+if(IOS)
+  set(SuiteSparse_CHOLMOD_LIBRARY
+  "${CMAKE_CURRENT_SOURCE_DIR}/external/ios/libcholmod.a")
+elseif(APPLE)
+  set(SuiteSparse_CHOLMOD_LIBRARY
+  "${CMAKE_CURRENT_SOURCE_DIR}/external/mac/libcholmod.a")
+elseif(UNIX)
 set(SuiteSparse_CHOLMOD_LIBRARY
   "${CMAKE_CURRENT_SOURCE_DIR}/external/linux/libcholmod.a")
+endif()
 set(SuiteSparse_INCLUDE_DIRS
   "${CMAKE_CURRENT_SOURCE_DIR}/external/linux/include") # if you have headers
 if(EXISTS "${SuiteSparse_INCLUDE_DIRS}")
@@ -119,12 +127,14 @@ set(CHOLMOD_FOUND TRUE)
 set(SuiteSparse_CHOLMOD_FOUND TRUE)
 
 # BLAS / LAPACK (Linux) or Accelerate (Apple)
-if(APPLE)
+if(IOS)
+  message(WARNING "Not using Accelerate on IOS")
+elseif(APPLE)
   find_library(ACCELERATE_FRAMEWORK Accelerate REQUIRED)
   set(SuiteSparse_LIBRARIES
     ${SuiteSparse_CHOLMOD_LIBRARY}
     ${ACCELERATE_FRAMEWORK})
-else()
+elseif(UNIX)
   find_package(BLAS REQUIRED)
   find_package(LAPACK REQUIRED)
   set(SuiteSparse_LIBRARIES
@@ -538,6 +548,8 @@ WRITE_BASIC_PACKAGE_VERSION_FILE(
 )
 
 configure_file(config.h.in "${CMAKE_CURRENT_BINARY_DIR}/g2o/config.h")
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
 # Only install config.h when this is the top-level project or when explicitly requested
 if(PROJECT_IS_TOP_LEVEL OR G2O_INSTALL_CMAKE_CONFIG)
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/g2o/config.h DESTINATION ${INCLUDES_DESTINATION}/g2o)
