@@ -525,12 +525,15 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${g2o_C_FLAGS}")
 # Find Eigen3. If it defines the target, this is used. If not,
 # fall back to the using the module form.
 # See https://eigen.tuxfamily.org/dox/TopicCMakeGuide.html for details
-find_package(Eigen3 3.3 REQUIRED)
-if(TARGET Eigen3::Eigen)
-  set(G2O_EIGEN3_EIGEN_TARGET Eigen3::Eigen)
-else()
-  include_directories(${EIGEN3_INCLUDE_DIR})
-endif()
+# set(EIGEN3_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/eigen3/)
+# include_directories(${EIGEN3_INCLUDE_DIR})
+# set(EIGEN3_VERSION_OK TRUE)
+# set(EIGEN3_FOUND true)
+# set(G2O_EIGEN3_EIGEN_TARGET Eigen3::Eigen)
+
+include_directories(EIGEN3_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/eigen3/)
+include_directories(SYSTEM ${EIGEN3_INCLUDE_DIR})
+set(EIGEN3_FOUND true)
 
 # Generate config.h
 set(G2O_OPENGL_FOUND ${OPENGL_FOUND})
